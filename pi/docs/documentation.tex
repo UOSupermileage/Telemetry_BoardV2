@@ -1,0 +1,126 @@
+\documentclass{article}
+\usepackage{graphicx} % Required for inserting images
+\usepackage[margin=1in]{geometry}
+\usepackage{booktabs}
+
+\title{RPI Telemetry Board - UO Supermileage}
+\author{Daniel Shan}
+\date{Created: October 6, 2026 \ Updated: October 14, 2026}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+A Raspberry Pi that reads a GNSS receiver, applies RTK corrections from an NTRIP caster,
+and serves the corrected position over the network. It is reachable remotely through NetBird.
+
+\section{Hardware}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Board & Raspberry Pi Zero 2 W \\
+GNSS  & Quectel LC29H(DA) on \texttt{/dev/ttyS0}, 115200 baud \\
+LTE   & Quectel EC25-AF (USB); no SIM installed \\
+\bottomrule
+\end{tabular}
+
+\section{Software}
+\begin{tabular}{@{}ll@{}}
+\toprule
+OS              & Debian 13 (trixie), 64-bit \\
+VPN             & \texttt{netbird.service} \\
+RTK client      & \texttt{ntrip-rtk.service} $\rightarrow$ \texttt{/usr/local/bin/ntrip\_rtk.py} \\
+RTK config      & \texttt{/etc/default/ntrip-rtk} \\
+GNSS tool       & \texttt{\textasciitilde/gpscmd.py} (send PQTM/PAIR commands) \\
+UART            & \texttt{enable\_uart=1} in \texttt{config.txt}; no serial console in \texttt{cmdline.txt} \\
+\bottomrule
+\end{tabular}
+
+\section{Network}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Wi-Fi           & \texttt{SUPER-CON}, \texttt{SUPER-NET} (equal priority) \\
+LTE             & profile \texttt{lte}, APN \texttt{sp.mb.com}, IPv6-only (DNS64) \\
+NetBird name    & \texttt{uosm-pi-01.supermileage.internal} \\
+NetBird IP      & \texttt{100.86.124.80} \\
+NetBird group   & \texttt{Servers - Private (INTERNAL ONLY)} \\
+\bottomrule
+\end{tabular}
+
+\medskip
+The Pi must be in the \texttt{Servers - Private} group; with no group, only ICMP is allowed and SSH fails.
+
+\section{Access}
+\begin{verbatim}
+ssh user@uosm-pi-01
+\end{verbatim}
+Requires NetBird connected and membership in \texttt{Standard UOSM Member}.
+
+\section{RTK Corrections (NTRIP)}
+\begin{tabular}{@{}ll@{}}
+\toprule
+Caster    & \texttt{142.41.245.88:2107} \\
+Mount     & \texttt{Gatineau\_RTCM3x} \\
+User      & \texttt{utilisateur} \\
+Password  & \texttt{12345678} \\
+Datum     & NAD83(CSRS) v2, epoch 1997.0 \\
+\bottomrule
+\end{tabular}
+
+\medskip
+Corrected positions are in NAD83(CSRS), not WGS84 (offset on the order of 1\,m).
+NMEA output is served on TCP port \texttt{10110}.
+
+\section{Install on a New Pi}
+Repo paths under \texttt{pi/} mirror the Pi's filesystem.
+\begin{verbatim}
+sudo cp ntrip_rtk.py /usr/local/bin/ && sudo chmod +x /usr/local/bin/ntrip_rtk.py
+sudo cp ntrip-rtk.service /etc/systemd/system/
+sudo nano /etc/default/ntrip-rtk        # NTRIP_HOST/PORT/MOUNT/USER/PASS
+sudo systemctl daemon-reload && sudo systemctl enable --now ntrip-rtk
+\end{verbatim}
+Optional overrides: \texttt{GPS\_DEV}, \texttt{NMEA\_TCP\_PORT}, \texttt{GGA\_INTERVAL}.
+
+\section{Useful Commands}
+\begin{verbatim}
+journalctl -u ntrip-rtk -f              # fix / sats / caster status
+sudo systemctl restart ntrip-rtk
+mmcli -m any                            # LTE modem status
+sudo netbird status
+\end{verbatim}
+
+\section{Status (Oct 14, 2026)}
+\begin{tabular}{@{}lll@{}}
+\toprule
+Item & State & Note \\
+\midrule
+SSH / NetBird   & Working     & Pi was in no group; added to Servers - Private \\
+Wi-Fi           & Working     & Connected to \texttt{SUPER-NET} \\
+GNSS receiver   & Working     & Responds; 0 sats indoors (expected) \\
+LTE             & Not working & No SIM (modem reports \texttt{sim-missing}) \\
+RTK caster      & Not working & No response from any network; settings correct \\
+\bottomrule
+\end{tabular}
+
+\medskip
+\textbf{RTK caster:} \texttt{142.41.245.88:2107} times out from SUPER-CON, eduroam and a phone hotspot
+(every port, ping, traceroute). Likely down, IP-restricted, or moved. Not a local network issue.
+
+\textbf{LTE (Oct 6, with SIM):} RSRP $-120$\,dBm, RSRQ $-19$\,dB indoors. Bands limited to 2, 4, 12
+(EC25-AF also supports 5, 13, 66, 71). SIM needed reseating once (\texttt{no-atr-received}).
+
+\section{Next Steps}
+\begin{enumerate}
+  \item Outdoors: confirm GNSS fix (\texttt{journalctl -u ntrip-rtk -f}, \texttt{sats} $> 0$).
+  \item Install a SIM; outdoors, confirm LTE registers and \texttt{wwu1i4} gets an address; check both antennas are attached.
+  \item If LTE stays weak: consider enabling bands 5 and 66.
+  \item RTK: contact the caster provider, switch to another caster (e.g.\ RTK2go), or build own base station.
+  \item Security: revoke the NetBird setup key in the dashboard (already removed from the Pi and the repo).
+\end{enumerate}
+
+\section{Own Base Station (option)}
+Base receiver (Quectel LC29H(BS) or u-blox ZED-F9P) with a multi-band antenna at a fixed point near the track,
+streaming RTCM3 to the car via 915\,MHz/LoRa radios (no internet needed) or via its own NTRIP caster over NetBird.
+Survey-in 5--30\,min before a run; gives cm-level accuracy relative to the base.
+
+\end{document}
