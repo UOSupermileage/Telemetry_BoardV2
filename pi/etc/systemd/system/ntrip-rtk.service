@@ -1,0 +1,13 @@
+[Unit]
+Description=NTRIP RTK corrections for LC29H(DA) GNSS
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+EnvironmentFile=/etc/default/ntrip-rtk
+ExecStart=/usr/bin/python3 -u /usr/local/bin/ntrip_rtk.py
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
