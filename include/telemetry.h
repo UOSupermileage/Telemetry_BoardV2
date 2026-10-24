@@ -1,0 +1,1 @@
+// Defines Telemetry data, measurement types, and validity flags.

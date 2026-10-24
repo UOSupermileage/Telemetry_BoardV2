@@ -1,0 +1,3 @@
+/*
+   Declares functions used to initialize sensors and obtain readings.
+*/
