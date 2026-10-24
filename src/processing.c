@@ -1,4 +1,6 @@
 /*
-  Aggregates readings, calculates derived metrics, and
-  produces the MQTT JSON payload.
-*/
+ * Aggregates readings, calculates derived metrics, and
+ * produces the MQTT JSON payload.
+ *
+ *
+ */
