@@ -1,0 +1,3 @@
+/*
+  Connects to Mosquitto and publishes the payload.
+*/
