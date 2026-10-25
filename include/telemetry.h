@@ -16,87 +16,71 @@
  * flat Telemetry V2 JSON payload.
  */
 
-/*-------------------------------------------------------
- * 1. Sensor reading status
- *------------------------------------------------------*/
-
-typedef enum {
-    SENSOR_UNAVAILABLE = 0,  /* No usable reading received yet */
-    SENSOR_VALID,            /* Reading is usable */
-    SENSOR_INVALID           /* Reading failed validation */
-} SensorStatus;
-
 /* ------------------------------------------------------
- * 2. Raw sensor readings
+ * 1. Raw sensor readings
  *
  * Each reading has its own timestamp and validity status.
  * Timestamps are UTC epoch milliseconds when available.
  * ----------------------------------------------------- */
 
 typedef struct {
-    double value;
-    int64_t timestamp_ms;
-    SensorStatus status;
-} TelemetryDoubleReading;
-
-typedef struct {
-    int value;
-    int64_t timestamp_ms;
-    SensorStatus status;
-} TelemetryIntReading;
-
-typedef struct {
-    bool value;
-    int64_t timestamp_ms;
-    SensorStatus status;
-} TelemetryBoolReading;
+   double value;
+   bool valid;
+} SensorReading;
 
 /* -------------------------------------------------------
- * 3. TelemetryData
+ * 2. TelemetryData
  *
  * Holds the latest readings from the physical sensors.
  * These are internal application names, not MQTT field names.
  * ----------------------------------------------------------- */
 
 typedef struct {
-   /* GPS */
-    TelemetryDoubleReading latitude_deg;
-    TelemetryDoubleReading longitude_deg;
-    TelemetryDoubleReading altitude_m;
-    TelemetryDoubleReading ground_speed_kmh;
-    TelemetryDoubleReading gps_fix_quality;
+    bool headlights;
+    bool running_lights;
+    bool left_turn_signal;
+    bool right_turn_signal;
+    bool wiper;
+    bool valid;
+} DashboardData;
+
+typedef struct {
+    /* GPS */
+    SensorReading latitude_deg;
+    SensorReading longitude_deg;
+    SensorReading altitude_m;
+    SensorReading ground_speed_kmh;
+    SensorReading gps_fix;
+    int64_t gps_timestamp_ms;
+    bool gps_timestamp_valid;
 
     /* Accelerometer: acceleration in g */
-    TelemetryDoubleReading acceleration_x_g;
-    TelemetryDoubleReading acceleration_y_g;
-    TelemetryDoubleReading acceleration_z_g;
+    SensorReading acceleration_x_g;
+    SensorReading acceleration_y_g;
+    SensorReading acceleration_z_g;
 
-    /* Hall-effect speedometer */
-    TelemetryDoubleReading hall_speed_kmh;
+    /* Hall-effect speed sensor */
+    SensorReading hall_speed_kmh;
 
     /* Electrical sensors */
-    TelemetryDoubleReading voltage_v;
-    TelemetryDoubleReading current_a;
-    TelemetryDoubleReading throttle_percent;
+    SensorReading voltage_v;
+    SensorReading current_a;
+    SensorReading throttle_percent;
 
     /* CAN measurements */
-    TelemetryDoubleReading air_pressure_kpa;
-    TelemetryDoubleReading load_1_kg;
-    TelemetryDoubleReading load_2_kg;
+    SensorReading air_pressure_kpa;
+    SensorReading load_1_kg;
+    SensorReading load_2_kg;
 
-    /* Dashboard switches and lights */
-    TelemetryBoolReading headlights;
-    TelemetryBoolReading running_lights;
-    TelemetryBoolReading left_turn_signal;
-    TelemetryBoolReading right_turn_signal;
-    TelemetryBoolReading wiper;
+    /* Dashboard switches */
+    DashboardData dashboard;
 
     /* Optional raw hall sensor count for distance calculation */
     uint64_t hall_pulse_count;
     int64_t hall_pulse_timestamp_ms;
     bool hall_pulse_count_valid;
 
-} TelemetryData;
+} SensorData;
 
 /* ---------------------------------------------------------
  * 4. Optional output values
@@ -111,17 +95,12 @@ typedef struct {
 typedef struct {
     double value;
     bool present;
-} TelemetryOptionalDouble;
+} OptionalDouble;
 
 typedef struct {
     int value;
     bool present;
-} TelemetryOptionalInt;
-
-typedef struct {
-    bool value;
-    bool present;
-} TelemetryOptionalBool;
+} OptionalInt;
 
 #define TELEMETRY_LIGHTS_STRING_LENGTH 6
 /* Five characters plus the terminating '\0'. */
@@ -141,28 +120,28 @@ typedef struct {
     bool ts_present;
 
     /* GPS */
-    TelemetryOptionalDouble lat;  /* Degrees */
-    TelemetryOptionalDouble lon;  /* Degrees */
-    TelemetryOptionalDouble alt;  /* Metres */
-    TelemetryOptionalDouble gs;   /* Ground speed, km/h */
-    TelemetryOptionalInt fix;     /* 0, 1, 2, 4, or 5 */
+    OptionalDouble lat;  /* Degrees */
+    OptionalDouble lon;  /* Degrees */
+    OptionalDouble alt;  /* Metres */
+    OptionalDouble gs;   /* Ground speed, km/h */
+    OptionalInt fix;     /* 0, 1, 2, 4, or 5 */
 
     /* Mean acceleration over the output interval, in g */
-    TelemetryOptionalDouble ax;
-    TelemetryOptionalDouble ay;
-    TelemetryOptionalDouble az;
+    OptionalDouble ax;
+    OptionalDouble ay;
+    OptionalDouble az;
 
     /* Hall speed and cumulative distance */
-    TelemetryOptionalDouble spd;  /* km/h */
-    TelemetryOptionalDouble dist; /* Metres since start */
+    OptionalDouble spd;  /* km/h */
+    OptionalDouble dist; /* Metres since start */
 
     /* Electrical measurements */
-    TelemetryOptionalDouble v;    /* Mean voltage, V */
-    TelemetryOptionalDouble i;    /* Mean current, A */
-    TelemetryOptionalDouble e;    /* Energy during interval, J */
+    OptionalDouble v;    /* Mean voltage, V */
+    OptionalDouble i;    /* Mean current, A */
+    OptionalDouble e;    /* Energy during interval, J */
 
     /* Dashboard */
-    TelemetryOptionalDouble thr;  /* Throttle, 0-100% */
+    OptionalDouble thr;  /* Throttle, 0-100% */
 
     /*
      * Exactly five characters:
@@ -173,9 +152,9 @@ typedef struct {
     bool lts_present;
 
     /* CAN measurements */
-    TelemetryOptionalDouble ap;   /* Air pressure, kPa */
-    TelemetryOptionalDouble l1;   /* Load gauge 1, kg */
-    TelemetryOptionalDouble l2;   /* Load gauge 2, kg */
+    OptionalDouble ap;   /* Air pressure, kPa */
+    OptionalDouble l1;   /* Load gauge 1, kg */
+    OptionalDouble l2;   /* Load gauge 2, kg */
 
 } TelemetrySnapshot;
 

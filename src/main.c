@@ -92,7 +92,7 @@ int main(void)
    /* 4. Main telemetry loop. */
    while (running) {
       /* Read the current sensor values. */
-      TelemetryData raw_data = sensors_read();
+      SensorData raw_data = sensors_read();
 
       /* Convert raw readings into the V2 telemetry format. */
       TelemetrySnapshot snapshot =
@@ -111,7 +111,9 @@ int main(void)
          char json[1024];
 
          if (processing_to_json(&snapshot, json, sizeof(json))) {
-            mqtt_client_publish(json);
+            if (!mqtt_client_publish(json)) {
+               fprintf(stderr, "Could not publish telemetry.\n");
+            }
          }
       }
 

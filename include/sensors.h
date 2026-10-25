@@ -15,17 +15,11 @@
 #define SENSORS_H
 
 #include <stdbool.h>
-
-typedef struct {
-    double x;
-    double y;
-    double z;
-    bool valid;
-} AccelerometerData;
+#include "telemetry.h"
 
 bool sensors_init(void);
 
-AccelerometerData get_accelerometer(void);
+SensorData sensors_read(void);
 
 void sensors_cleanup(void);
 
