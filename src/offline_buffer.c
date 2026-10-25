@@ -1,0 +1,3 @@
+/*
+  Queues outbound messages for later delivery if connectivity fails.
+*/
