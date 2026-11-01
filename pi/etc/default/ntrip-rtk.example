@@ -1,0 +1,10 @@
+# Copy to /etc/default/ntrip-rtk on the Pi (chmod 600) and fill in.
+NTRIP_HOST=142.41.245.88
+NTRIP_PORT=2107
+NTRIP_MOUNT=Gatineau_RTCM3x
+NTRIP_USER=
+NTRIP_PASS=
+# Optional overrides
+#GPS_DEV=/dev/ttyS0
+#NMEA_TCP_PORT=10110
+#GGA_INTERVAL=10

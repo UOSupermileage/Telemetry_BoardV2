@@ -5,7 +5,7 @@ Wants=network-online.target
 
 [Service]
 EnvironmentFile=/etc/default/ntrip-rtk
-ExecStart=/usr/bin/python3 -u /usr/local/bin/ntrip_rtk.py
+ExecStart=/usr/local/bin/ntrip_rtk
 Restart=always
 RestartSec=5
 

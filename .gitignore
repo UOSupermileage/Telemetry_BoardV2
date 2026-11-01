@@ -53,3 +53,12 @@ dkms.conf
 
 # debug information files
 *.dwo
+
+# Pi secrets (use pi/etc/default/ntrip-rtk.example as the template)
+pi/etc/default/ntrip-rtk
+*.nmconnection
+
+# Built C binaries
+pi/src/ntrip_rtk
+pi/src/gpscmd
+pi/src/can_reader

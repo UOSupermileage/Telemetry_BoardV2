@@ -29,9 +29,9 @@ LTE   & Quectel EC25-AF (USB); no SIM installed \\
 \toprule
 OS              & Debian 13 (trixie), 64-bit \\
 VPN             & \texttt{netbird.service} \\
-RTK client      & \texttt{ntrip-rtk.service} $\rightarrow$ \texttt{/usr/local/bin/ntrip\_rtk.py} \\
+RTK client      & \texttt{ntrip-rtk.service} $\rightarrow$ \texttt{/usr/local/bin/ntrip\_rtk} \\
 RTK config      & \texttt{/etc/default/ntrip-rtk} \\
-GNSS tool       & \texttt{\textasciitilde/gpscmd.py} (send PQTM/PAIR commands) \\
+GNSS tool       & \texttt{gpscmd} (send PQTM/PAIR commands) \\
 UART            & \texttt{enable\_uart=1} in \texttt{config.txt}; no serial console in \texttt{cmdline.txt} \\
 \bottomrule
 \end{tabular}
@@ -40,7 +40,7 @@ UART            & \texttt{enable\_uart=1} in \texttt{config.txt}; no serial cons
 \begin{tabular}{@{}ll@{}}
 \toprule
 Wi-Fi           & \texttt{SUPER-CON}, \texttt{SUPER-NET} (equal priority) \\
-LTE             & profile \texttt{lte}, APN \texttt{sp.mb.com}, IPv6-only (DNS64) \\
+LTE             & profile \texttt{lte}, APN auto from SIM, IPv4 + IPv6 \\
 NetBird name    & \texttt{uosm-pi-01.supermileage.internal} \\
 NetBird IP      & \texttt{100.86.124.80} \\
 NetBird group   & \texttt{Servers - Private (INTERNAL ONLY)} \\
@@ -74,9 +74,10 @@ NMEA output is served on TCP port \texttt{10110}.
 \section{Install on a New Pi}
 Repo paths under \texttt{pi/} mirror the Pi's filesystem.
 \begin{verbatim}
-sudo cp ntrip_rtk.py /usr/local/bin/ && sudo chmod +x /usr/local/bin/ntrip_rtk.py
+cd pi/src && make && sudo make install     # ntrip_rtk, gpscmd, can_reader
 sudo cp ntrip-rtk.service /etc/systemd/system/
-sudo nano /etc/default/ntrip-rtk        # NTRIP_HOST/PORT/MOUNT/USER/PASS
+sudo install -m 600 ntrip-rtk.example /etc/default/ntrip-rtk
+sudo nano /etc/default/ntrip-rtk        # fill in NTRIP_USER/PASS
 sudo systemctl daemon-reload && sudo systemctl enable --now ntrip-rtk
 \end{verbatim}
 Optional overrides: \texttt{GPS\_DEV}, \texttt{NMEA\_TCP\_PORT}, \texttt{GGA\_INTERVAL}.
